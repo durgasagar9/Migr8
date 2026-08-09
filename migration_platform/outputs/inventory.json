@@ -1,0 +1,178 @@
+{
+  "source_environment": "on-prem-datacenter-1",
+  "resources": [
+    {
+      "id": "net-core",
+      "name": "core-network",
+      "type": "network",
+      "attributes": {
+        "cidr": "10.0.0.0/16"
+      },
+      "tags": {
+        "tier": "infra"
+      },
+      "depends_on": []
+    },
+    {
+      "id": "dns-primary",
+      "name": "internal-dns",
+      "type": "dns",
+      "attributes": {
+        "zone": "corp.internal"
+      },
+      "tags": {
+        "tier": "infra"
+      },
+      "depends_on": [
+        "net-core"
+      ]
+    },
+    {
+      "id": "db-orders",
+      "name": "orders-postgres",
+      "type": "database",
+      "attributes": {
+        "engine": "postgresql",
+        "version": "13",
+        "size_gb": 512,
+        "ha": false
+      },
+      "tags": {
+        "tier": "data",
+        "app": "orders"
+      },
+      "depends_on": [
+        "net-core"
+      ]
+    },
+    {
+      "id": "db-legacy-crm",
+      "name": "crm-oracle",
+      "type": "database",
+      "attributes": {
+        "engine": "oracle",
+        "version": "11g",
+        "size_gb": 2048,
+        "ha": false,
+        "eol": true
+      },
+      "tags": {
+        "tier": "data",
+        "app": "crm"
+      },
+      "depends_on": [
+        "net-core"
+      ]
+    },
+    {
+      "id": "vm-web-01",
+      "name": "orders-web-01",
+      "type": "compute",
+      "attributes": {
+        "os": "ubuntu-20.04",
+        "cpu": 4,
+        "ram_gb": 16,
+        "role": "web",
+        "stateless": true
+      },
+      "tags": {
+        "tier": "app",
+        "app": "orders"
+      },
+      "depends_on": [
+        "db-orders",
+        "net-core"
+      ]
+    },
+    {
+      "id": "vm-web-02",
+      "name": "orders-web-02",
+      "type": "compute",
+      "attributes": {
+        "os": "ubuntu-20.04",
+        "cpu": 4,
+        "ram_gb": 16,
+        "role": "web",
+        "stateless": true
+      },
+      "tags": {
+        "tier": "app",
+        "app": "orders"
+      },
+      "depends_on": [
+        "db-orders",
+        "net-core"
+      ]
+    },
+    {
+      "id": "vm-crm-app",
+      "name": "crm-app-server",
+      "type": "compute",
+      "attributes": {
+        "os": "windows-server-2008r2",
+        "cpu": 8,
+        "ram_gb": 32,
+        "role": "app",
+        "stateless": false,
+        "eol": true
+      },
+      "tags": {
+        "tier": "app",
+        "app": "crm"
+      },
+      "depends_on": [
+        "db-legacy-crm",
+        "net-core"
+      ]
+    },
+    {
+      "id": "lb-orders",
+      "name": "orders-loadbalancer",
+      "type": "load_balancer",
+      "attributes": {
+        "algorithm": "round_robin"
+      },
+      "tags": {
+        "tier": "app",
+        "app": "orders"
+      },
+      "depends_on": [
+        "vm-web-01",
+        "vm-web-02"
+      ]
+    },
+    {
+      "id": "fs-reports",
+      "name": "reports-fileshare",
+      "type": "object_storage",
+      "attributes": {
+        "size_gb": 900,
+        "protocol": "nfs"
+      },
+      "tags": {
+        "tier": "data",
+        "app": "reporting"
+      },
+      "depends_on": [
+        "net-core"
+      ]
+    },
+    {
+      "id": "job-nightly-etl",
+      "name": "nightly-etl-job",
+      "type": "function",
+      "attributes": {
+        "runtime": "python3.9",
+        "schedule": "cron(0 2 * * *)"
+      },
+      "tags": {
+        "tier": "batch",
+        "app": "reporting"
+      },
+      "depends_on": [
+        "db-orders",
+        "fs-reports"
+      ]
+    }
+  ]
+}

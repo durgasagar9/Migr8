@@ -1,0 +1,119 @@
+{
+  "target_cloud": "aws",
+  "waves": [
+    [
+      "net-core"
+    ],
+    [
+      "db-legacy-crm",
+      "db-orders",
+      "dns-primary",
+      "fs-reports"
+    ],
+    [
+      "job-nightly-etl",
+      "vm-crm-app",
+      "vm-web-01",
+      "vm-web-02"
+    ],
+    [
+      "lb-orders"
+    ]
+  ],
+  "resource_plans": {
+    "net-core": {
+      "resource_id": "net-core",
+      "strategy": "rehost",
+      "target_service": "aws_vpc",
+      "wave": 1,
+      "risk": "medium",
+      "rationale": "Recreate network topology (VPC/subnets/routing) as the foundation other resources land on.",
+      "estimated_downtime_minutes": 30
+    },
+    "db-legacy-crm": {
+      "resource_id": "db-legacy-crm",
+      "strategy": "replatform",
+      "target_service": "aws_db_instance",
+      "wave": 2,
+      "risk": "high",
+      "rationale": "EOL/legacy engine: move to a managed equivalent (e.g. RDS) rather than a straight lift-and-shift; schema/engine compatibility needs validation.",
+      "estimated_downtime_minutes": 100
+    },
+    "db-orders": {
+      "resource_id": "db-orders",
+      "strategy": "replatform",
+      "target_service": "aws_db_instance",
+      "wave": 2,
+      "risk": "medium",
+      "rationale": "Standard managed-database replatform (self-managed -> RDS-class service) to pick up automated backups/HA.",
+      "estimated_downtime_minutes": 70
+    },
+    "dns-primary": {
+      "resource_id": "dns-primary",
+      "strategy": "rehost",
+      "target_service": "aws_route53_zone",
+      "wave": 2,
+      "risk": "low",
+      "rationale": "Recreate DNS zone in managed DNS; cutover is the last step and the easiest to roll back.",
+      "estimated_downtime_minutes": 30
+    },
+    "fs-reports": {
+      "resource_id": "fs-reports",
+      "strategy": "replatform",
+      "target_service": "aws_s3_bucket",
+      "wave": 2,
+      "risk": "low",
+      "rationale": "File share -> object storage; low risk, plan for a protocol change (NFS/SMB clients need to switch to S3 API or a gateway).",
+      "estimated_downtime_minutes": 60
+    },
+    "job-nightly-etl": {
+      "resource_id": "job-nightly-etl",
+      "strategy": "rehost",
+      "target_service": "aws_lambda_function",
+      "wave": 3,
+      "risk": "low",
+      "rationale": "Scheduled job maps directly onto a managed serverless function.",
+      "estimated_downtime_minutes": 30
+    },
+    "vm-crm-app": {
+      "resource_id": "vm-crm-app",
+      "strategy": "refactor",
+      "target_service": "aws_instance",
+      "wave": 3,
+      "risk": "high",
+      "rationale": "EOL OS: rehosting would carry the unsupported OS into the cloud. Recommend refactoring onto a supported runtime/container image before or during migration.",
+      "estimated_downtime_minutes": 180
+    },
+    "vm-web-01": {
+      "resource_id": "vm-web-01",
+      "strategy": "replatform",
+      "target_service": "aws_instance",
+      "wave": 3,
+      "risk": "low",
+      "rationale": "Stateless web/app tier: good candidate for replatforming onto an auto-scaled instance group behind a load balancer.",
+      "estimated_downtime_minutes": 60
+    },
+    "vm-web-02": {
+      "resource_id": "vm-web-02",
+      "strategy": "replatform",
+      "target_service": "aws_instance",
+      "wave": 3,
+      "risk": "low",
+      "rationale": "Stateless web/app tier: good candidate for replatforming onto an auto-scaled instance group behind a load balancer.",
+      "estimated_downtime_minutes": 60
+    },
+    "lb-orders": {
+      "resource_id": "lb-orders",
+      "strategy": "replatform",
+      "target_service": "aws_lb",
+      "wave": 4,
+      "risk": "low",
+      "rationale": "Replace with a managed load balancer service.",
+      "estimated_downtime_minutes": 60
+    }
+  },
+  "notes": [
+    "2 high-risk resource(s) flagged for extra review before cutover: db-legacy-crm, vm-crm-app.",
+    "Plan has 4 wave(s); resources within a wave have no dependency ordering between them and can migrate in parallel."
+  ]
+}

@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migration Automation Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0D1520;
+  --panel: #131B27;
+  --panel-raised: #182233;
+  --line: #24313F;
+  --paper: #E7ECF1;
+  --muted: #7C8A99;
+  --signal: #E8A33D;
+  --signal-dim: #4a3a1f;
+  --route: #4FB8C4;
+  --go: #4FAE7C;
+  --hold: #E2584B;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(79,184,196,0.08), transparent),
+    radial-gradient(ellipse 700px 400px at 100% 10%, rgba(232,163,61,0.06), transparent);
+  color: var(--paper);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.display { font-family: "Space Grotesk", sans-serif; }
+
+a { color: var(--route); }
+
+button {
+  font-family: "IBM Plex Mono", monospace;
+  cursor: pointer;
+}
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* ---------- Shell ---------- */
+
+.shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.wordmark .glyph {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--signal);
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-6deg);
+}
+.wordmark .title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+}
+.wordmark .subtitle {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* boarding-pass style progress */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.progress .step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress .dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  background: transparent;
+}
+.progress .step.active .dot {
+  background: var(--signal);
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-dim);
+}
+.progress .step.active { color: var(--paper); }
+.progress .rule {
+  width: 40px; height: 1px;
+  background: var(--line);
+}
+
+/* ---------- Panels / cards ---------- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.section-head h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+.field label {
+  display: block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.field input[type=text], .field input[type=number], .field select, .field textarea {
+  width: 100%;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+}
+.field textarea { resize: vertical; min-height: 90px; }
+.field-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.field-row > .field { flex: 1; min-width: 140px; }
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--paper);
+}
+.checkline input { accent-color: var(--signal); width: 15px; height: 15px; }
+
+/* ticket-style destination selector */
+.tickets {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ticket {
+  flex: 1;
+  min-width: 150px;
+  background: var(--panel-raised);
+  border: 1.5px dashed var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.ticket:hover { border-color: var(--route); }
+.ticket.selected {
+  border-color: var(--signal);
+  border-style: solid;
+  background: linear-gradient(180deg, rgba(232,163,61,0.10), transparent);
+}
+.ticket .t-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+}
+.ticket .t-kind {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* buttons */
+.btn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  border-radius: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  background: var(--panel-raised);
+  color: var(--paper);
+  letter-spacing: 0.02em;
+}
+.btn:hover { border-color: var(--route); }
+.btn.primary {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #241804;
+  font-weight: 600;
+}
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 6px 11px; font-size: 11px; }
+.btn.danger { color: var(--hold); border-color: var(--hold); background: transparent; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+
+/* resource cards */
+.resource-card {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.resource-card .rc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.resource-card .rc-index {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+  width: 22px;
+}
+.resource-card .rc-type-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(79,184,196,0.14);
+  color: var(--route);
+  white-space: nowrap;
+}
+.resource-card .rc-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+}
+.resource-card .rc-id {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.resource-card .rc-body {
+  padding: 4px 14px 16px;
+  border-top: 1px solid var(--line);
+}
+.chevron { color: var(--muted); font-size: 11px; transition: transform .15s; }
+.resource-card.collapsed .rc-body { display: none; }
+.resource-card.collapsed .chevron { transform: rotate(-90deg); }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.chip.on {
+  border-color: var(--route);
+  color: var(--route);
+  background: rgba(79,184,196,0.10);
+}
+.chip.disabled { opacity: 0.4; cursor: not-allowed; }
+
+.banner {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  margin-bottom: 16px;
+  border: 1px solid;
+}
+.banner.error { background: rgba(226,88,75,0.10); border-color: var(--hold); color: #f3a9a0; }
+.banner.hint { background: rgba(79,184,196,0.08); border-color: var(--line); color: var(--muted); }
+
+.cta-row { display: flex; justify-content: flex-end; margin-top: 22px; gap: 10px; }
+
+footer.hint {
+  margin-top: 40px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Results screen ---------- */
+
+.hero-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+@media (max-width: 720px) {
+  .hero-row { grid-template-columns: 1fr; }
+  .shell { padding: 20px 16px 60px; }
+  .field-row { flex-direction: column; }
+  .field-row > .field { min-width: 0; }
+  table.manifest { min-width: 640px; }
+}
+
+.gauge-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+}
+.gauge-panel .g-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.gauge-panel .g-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.readout-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+.readout-panel .r-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.readout-panel .r-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+}
+.bar-track {
+  height: 6px;
+  background: var(--ink);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill { height: 100%; border-radius: 4px; }
+
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-mini {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.stat-mini .n {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+.stat-mini .l {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+.blocker-item, .risk-item {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.blocker-item {
+  background: rgba(226,88,75,0.08);
+  border: 1px solid rgba(226,88,75,0.35);
+  color: #f3b6ae;
+}
+.blocker-item::before { content: "HOLD — "; color: var(--hold); font-weight: 600; }
+.risk-item {
+  background: rgba(124,138,153,0.08);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.risk-item::before { content: "NOTE — "; color: var(--route); font-weight: 600; }
+
+/* route line */
+.route-wrap {
+  overflow-x: auto;
+  padding: 10px 4px 18px;
+}
+.route-line {
+  display: flex;
+  align-items: flex-start;
+  min-width: max-content;
+}
+.route-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  flex-shrink: 0;
+}
+.route-node .node-dot-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.route-node .segment {
+  flex: 1;
+  height: 2px;
+  background: var(--route);
+}
+.route-node:first-child .segment.left { background: transparent; }
+.route-node:last-child .segment.right { background: transparent; }
+.route-node .dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--route);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 1px var(--route);
+  flex-shrink: 0;
+}
+.route-node .w-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+}
+.route-node .w-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  width: 100%;
+}
+.w-chip {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.w-chip.risk-low { border-left: 3px solid var(--go); }
+.w-chip.risk-medium { border-left: 3px solid var(--signal); }
+.w-chip.risk-high { border-left: 3px solid var(--hold); }
+
+/* manifest table */
+.table-wrap { overflow-x: auto; }
+table.manifest {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+}
+table.manifest td.notes-cell { white-space: normal; }
+table.manifest td:not(.notes-cell) { white-space: nowrap; }
+table.manifest th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.manifest td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge.risk-low, .badge.ok { background: rgba(79,174,124,0.15); color: var(--go); }
+.badge.risk-medium { background: rgba(232,163,61,0.15); color: var(--signal); }
+.badge.risk-high, .badge.bad { background: rgba(226,88,75,0.15); color: var(--hold); }
+.notes-cell { color: var(--muted); max-width: 280px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="wordmark">
+      <span class="glyph">M</span>
+      <div>
+        <div class="title">Migration Automation Platform</div>
+        <div class="subtitle">manifest → analysis</div>
+      </div>
+    </div>
+    <div class="progress" id="progressBar">
+      <div class="step active" data-step="manifest"><span class="dot"></span> Manifest</div>
+      <div class="rule"></div>
+      <div class="step" data-step="results"><span class="dot"></span> Flight report</div>
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN 1: MANIFEST / INPUT ===================== -->
+  <div class="screen active" id="screen-manifest">
+
+    <div class="panel" style="margin-bottom:16px;">
+      <p class="eyebrow">Step 1</p>
+      <div class="section-head"><h2>Project details</h2></div>
+      <div class="field-row">
+        <div class="field">
+          <label for="envName">Environment name</label>
+          <input type="text" id="envName" class="mono" value="my-environment" placeholder="e.g. on-prem-datacenter-1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Destination</label>
+        <div class="tickets" id="ticketRow"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="eyebrow">Step 2</p>
+      <div class="section-head">
+        <h2>Resource manifest</h2>
+        <button class="btn primary small" id="addResourceBtn">+ Add resource</button>
+      </div>
+      <div id="banner-area"></div>
+      <div id="resourceList"></div>
+      <div class="toolbar">
+        <button class="btn small" id="loadSampleBtn">Load sample environment</button>
+        <button class="btn small" id="importBtn">Import JSON</button>
+        <button class="btn small" id="exportBtn">Export JSON</button>
+      </div>
+      <textarea id="importArea" class="mono" style="display:none;width:100%;min-height:140px;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:6px;padding:10px;margin-top:8px;" placeholder="Paste inventory JSON here, then click Apply import"></textarea>
+      <div id="importActions" style="display:none;margin-top:8px;">
+        <button class="btn small primary" id="applyImportBtn">Apply import</button>
+        <button class="btn small ghost" id="cancelImportBtn">Cancel</button>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn primary" id="analyzeBtn" style="padding:12px 24px;font-size:13px;">Run analysis →</button>
+    </div>
+
+    <footer class="hint">Everything runs locally in your browser — no data leaves this page.</footer>
+  </div>
+
+  <!-- ===================== SCREEN 2: FLIGHT REPORT / RESULTS ===================== -->
+  <div class="screen" id="screen-results">
+    <button class="btn ghost small" id="backBtn" style="margin-bottom:18px;">← Back to manifest</button>
+    <div id="resultsContent"></div>
+  </div>
+
+</div>
+
+<script>
+// ======================================================================
+// ENGINE — dependency graph, compatibility/success-probability scoring,
+// and 6R migration planning. Ported 1:1 from the Python reference
+// implementation and verified to produce identical numbers.
+// ======================================================================
+
+const TARGET_PROFILES = {
+  aws: {
+    name: "AWS", kind: "cloud",
+    supportedDbEngines: new Set(["postgresql", "mysql", "mariadb", "sqlserver", "oracle"]),
+    supportedOsPatterns: ["ubuntu", "amazon-linux", "windows-server-2016", "windows-server-2019", "windows-server-2022", "rhel", "centos", "debian", "suse"],
+    maxCpu: 128, maxRamGb: 4096,
+    supportsServerless: true, supportsManagedLb: true, supportsManagedObjectStorage: true,
+    notes: "Broadest managed-service coverage of the three profiles. Oracle is supported via RDS Custom/EC2 but still carries licensing overhead.",
+  },
+  azure: {
+    name: "Azure", kind: "cloud",
+    supportedDbEngines: new Set(["postgresql", "mysql", "mariadb", "sqlserver"]),
+    supportedOsPatterns: ["ubuntu", "windows-server-2016", "windows-server-2019", "windows-server-2022", "rhel", "centos", "debian", "suse"],
+    maxCpu: 96, maxRamGb: 3892,
+    supportsServerless: true, supportsManagedLb: true, supportsManagedObjectStorage: true,
+    notes: "No first-party managed Oracle service — Oracle workloads must run self-managed on a VM, which lowers compatibility for that engine.",
+  },
+  on_prem: {
+    name: "On-Premises", kind: "on_prem",
+    supportedDbEngines: new Set(["postgresql", "mysql", "mariadb", "sqlserver", "oracle"]),
+    supportedOsPatterns: ["ubuntu", "windows-server-2016", "windows-server-2019", "windows-server-2022", "rhel", "centos", "debian", "suse", "windows-server-2012"],
+    maxCpu: 64, maxRamGb: 512,
+    supportsServerless: false, supportsManagedLb: false, supportsManagedObjectStorage: false,
+    notes: "Engine/OS support is broad since nothing is a managed service here, but there is no serverless, managed LB, or managed object storage, and hardware sizing is capped by whatever the target datacenter actually has racked.",
+  },
+};
+
+function buildEdges(resources) {
+  const edges = {};
+  for (const r of resources) edges[r.id] = new Set(r.dependsOn || []);
+  return edges;
+}
+
+function detectCycle(edges) {
+  const WHITE = 0, GRAY = 1, BLACK = 2;
+  const color = {};
+  for (const n of Object.keys(edges)) color[n] = WHITE;
+  let cyclePath = null;
+  function dfs(node, path) {
+    color[node] = GRAY;
+    path.push(node);
+    for (const dep of edges[node]) {
+      if (!(dep in edges)) continue;
+      if (color[dep] === GRAY) {
+        const idx = path.indexOf(dep);
+        cyclePath = path.slice(idx).concat([dep]);
+        return true;
+      }
+      if (color[dep] === WHITE && dfs(dep, path)) return true;
+    }
+    path.pop();
+    color[node] = BLACK;
+    return false;
+  }
+  for (const node of Object.keys(edges)) {
+    if (color[node] === WHITE && dfs(node, [])) return cyclePath;
+  }
+  return null;
+}
+
+function findUnknownRefs(edges) {
+  const known = new Set(Object.keys(edges));
+  const unknown = [];
+  for (const [rid, deps] of Object.entries(edges)) {
+    for (const d of deps) if (!known.has(d)) unknown.push({ resource: rid, unknownDep: d });
+  }
+  return unknown;
+}
+
+function computeWaves(resources) {
+  const edges = buildEdges(resources);
+  const unknown = findUnknownRefs(edges);
+  if (unknown.length) { const e = new Error("unknown_dependency"); e.detail = unknown; throw e; }
+  const cycle = detectCycle(edges);
+  if (cycle) { const e = new Error("cycle"); e.detail = cycle; throw e; }
+
+  const remaining = {};
+  for (const [k, v] of Object.entries(edges)) remaining[k] = new Set(v);
+  const migrated = new Set();
+  const waves = [];
+  while (Object.keys(remaining).length) {
+    const ready = Object.keys(remaining).filter((n) => [...remaining[n]].every((d) => migrated.has(d))).sort();
+    if (!ready.length) { const e = new Error("cycle"); e.detail = Object.keys(remaining); throw e; }
+    waves.push(ready);
+    for (const n of ready) { migrated.add(n); delete remaining[n]; }
+  }
+  return waves;
+}
+
+function dependentsOf(resources, resourceId) {
+  const edges = buildEdges(resources);
+  return Object.entries(edges).filter(([, deps]) => deps.has(resourceId)).map(([n]) => n).sort();
+}
+
+function clamp(v) { return Math.max(0, Math.min(100, v)); }
+
+function scoreDatabase(r, profile) {
+  let compat = 100, perf = 100;
+  const blockers = [], issues = [];
+  const engine = r.attributes.engine || "";
+  if (!profile.supportedDbEngines.has(engine)) {
+    blockers.push(`Engine '${engine}' is not supported on ${profile.name} in this profile — requires a database re-platform to a supported engine before/during migration.`);
+    compat -= 55;
+  } else if (engine === "oracle" && profile.name === "AWS") {
+    issues.push("Oracle is supported but only via RDS Custom or self-managed EC2, not standard RDS — factor in licensing and operational overhead.");
+    compat -= 10;
+  }
+  if (r.attributes.eol) {
+    issues.push("Source engine version is end-of-life; managed-service compatibility for this exact version is not guaranteed and an in-place upgrade may be required first.");
+    compat -= 15;
+  }
+  if (!r.attributes.ha && profile.kind === "cloud") {
+    issues.push("Source has no HA configured; recommend enabling Multi-AZ/zone-redundancy on the target for equivalent reliability post-migration.");
+    perf -= 8;
+  }
+  const sizeGb = r.attributes.size_gb || 0;
+  if (sizeGb > 4000 && profile.kind === "on_prem") {
+    issues.push("Large dataset relative to typical on-prem storage sizing tiers; confirm target storage array headroom before cutover.");
+    perf -= 15;
+  }
+  return { compat, perf, blockers, issues };
+}
+
+function scoreCompute(r, profile) {
+  let compat = 100, perf = 100;
+  const blockers = [], issues = [];
+  const osStr = String(r.attributes.os || "").toLowerCase();
+  if (!profile.supportedOsPatterns.some((p) => osStr.includes(p))) {
+    blockers.push(`OS '${r.attributes.os}' has no direct supported image/pattern on ${profile.name} in this profile — requires an OS upgrade or a rebuild onto a supported image.`);
+    compat -= 55;
+  } else if (r.attributes.eol) {
+    issues.push("OS is end-of-life; even though a similar image exists on the target, the unsupported OS should not simply be carried forward.");
+    compat -= 20;
+  }
+  const cpu = r.attributes.cpu || 0;
+  const ram = r.attributes.ram_gb || 0;
+  if (cpu > profile.maxCpu || ram > profile.maxRamGb) {
+    issues.push(`Requested capacity (${cpu} vCPU / ${ram} GB) exceeds this profile's typical sizing ceiling (${profile.maxCpu} vCPU / ${profile.maxRamGb} GB); may require a custom/high-memory tier or won't fit at all.`);
+    perf -= 15;
+  }
+  return { compat, perf, blockers, issues };
+}
+
+function scoreFunction(r, profile) {
+  const blockers = [], issues = [];
+  let compat = 100, perf = 100;
+  if (!profile.supportsServerless) {
+    blockers.push(`${profile.name} in this profile has no serverless offering — the job must be rehosted as a scheduled task on a VM instead of a direct lift.`);
+    compat -= 40;
+  }
+  return { compat, perf, blockers, issues };
+}
+
+function scoreLoadBalancer(r, profile) {
+  const blockers = [], issues = [];
+  let compat = 100, perf = 100;
+  if (!profile.supportsManagedLb) {
+    issues.push(`${profile.name} in this profile has no managed load balancer — requires a self-managed LB (e.g. HAProxy/NGINX) with its own HA and patching burden.`);
+    compat -= 20; perf -= 10;
+  }
+  return { compat, perf, blockers, issues };
+}
+
+function scoreObjectStorage(r, profile) {
+  const blockers = [], issues = [];
+  let compat = 100, perf = 100;
+  if (!profile.supportsManagedObjectStorage) {
+    issues.push(`${profile.name} in this profile has no managed object storage — requires a self-hosted equivalent (e.g. MinIO) or falling back to a file share/NFS.`);
+    compat -= 20;
+  }
+  return { compat, perf, blockers, issues };
+}
+
+const SCORERS = { database: scoreDatabase, compute: scoreCompute, function: scoreFunction, load_balancer: scoreLoadBalancer, object_storage: scoreObjectStorage };
+
+function scoreResource(r, profile) {
+  const scorer = SCORERS[r.type];
+  let compat = 100, perf = 100, blockers = [], issues = [];
+  if (scorer) ({ compat, perf, blockers, issues } = scorer(r, profile));
+  compat = clamp(compat); perf = clamp(perf);
+  let combined = Math.round(0.6 * compat + 0.4 * perf);
+  if (blockers.length) combined = Math.min(combined, 40);
+  return { resourceId: r.id, compat, perf, combined, blockers, issues };
+}
+
+function analyzeCompatibility(resources, targetProfileKey) {
+  const profile = TARGET_PROFILES[targetProfileKey];
+  const results = resources.map((r) => scoreResource(r, profile));
+  const weights = {};
+  for (const res of results) weights[res.resourceId] = 1 + dependentsOf(resources, res.resourceId).length;
+  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+  const overallCompat = Math.round(results.reduce((s, r) => s + r.compat * weights[r.resourceId], 0) / totalWeight);
+  const overallPerf = Math.round(results.reduce((s, r) => s + r.perf * weights[r.resourceId], 0) / totalWeight);
+  const weightedCombined = results.reduce((s, r) => s + r.combined * weights[r.resourceId], 0) / totalWeight;
+  const allBlockers = results.flatMap((r) => r.blockers.map((b) => ({ resourceId: r.resourceId, text: b })));
+  const allIssues = results.flatMap((r) => r.issues.map((i) => ({ resourceId: r.resourceId, text: i })));
+  const blockerPenalty = Math.min(30, 6 * allBlockers.length);
+  const successProbability = Math.max(0, Math.round(weightedCombined) - blockerPenalty);
+  return { targetName: profile.name, targetKind: profile.kind, results, overallCompat, overallPerf, successProbability, blockers: allBlockers, issues: allIssues, profileNotes: profile.notes };
+}
+
+const AWS_TARGET_SERVICE = { compute: "aws_instance", database: "aws_db_instance", object_storage: "aws_s3_bucket", block_storage: "aws_ebs_volume", network: "aws_vpc", load_balancer: "aws_lb", function: "aws_lambda_function", queue: "aws_sqs_queue", dns: "aws_route53_zone" };
+
+function decideStrategy(r) {
+  const a = r.attributes;
+  if (r.type === "database") {
+    if (a.eol || ["oracle", "db2"].includes(a.engine)) return ["replatform", "high", "EOL/legacy engine: move to a managed equivalent rather than a straight lift-and-shift; schema/engine compatibility needs validation."];
+    return ["replatform", "medium", "Standard managed-database replatform to pick up automated backups/HA."];
+  }
+  if (r.type === "compute") {
+    if (a.eol || String(a.os || "").includes("2008")) return ["refactor", "high", "EOL OS: rehosting would carry the unsupported OS into the cloud. Recommend refactoring onto a supported runtime/image."];
+    if (a.stateless) return ["replatform", "low", "Stateless web/app tier: good candidate for replatforming onto an auto-scaled instance group."];
+    return ["rehost", "medium", "Stateful, non-EOL server: lift-and-shift first, optimize later."];
+  }
+  if (r.type === "object_storage") return ["replatform", "low", "File share → object storage; plan for a protocol change."];
+  if (r.type === "function") return ["rehost", "low", "Scheduled job maps directly onto a managed serverless function."];
+  if (r.type === "load_balancer") return ["replatform", "low", "Replace with a managed load balancer service."];
+  if (r.type === "network") return ["rehost", "medium", "Recreate network topology as the foundation other resources land on."];
+  if (r.type === "dns") return ["rehost", "low", "Recreate DNS zone in managed DNS; easiest step to roll back."];
+  return ["rehost", "medium", "Default lift-and-shift."];
+}
+
+function estimateDowntime(r, strategy) {
+  const base = { rehost: 30, replatform: 60, refactor: 180, repurchase: 120, retain: 0, retire: 0 }[strategy];
+  let total = base;
+  if (r.type === "database") total += Math.floor((r.attributes.size_gb || 0) / 50);
+  return total;
+}
+
+function buildPlan(resources) {
+  const waves = computeWaves(resources);
+  const byId = Object.fromEntries(resources.map((r) => [r.id, r]));
+  const resourcePlans = {};
+  waves.forEach((wave, i) => {
+    const waveIdx = i + 1;
+    for (const rid of wave) {
+      const r = byId[rid];
+      const [strategy, risk, rationale] = decideStrategy(r);
+      resourcePlans[rid] = { resourceId: rid, strategy, targetService: AWS_TARGET_SERVICE[r.type] || "unknown", wave: waveIdx, risk, rationale, estimatedDowntime: estimateDowntime(r, strategy) };
+    }
+  });
+  return { waves, resourcePlans };
+}
+
+// ======================================================================
+// APP STATE + UI
+// ======================================================================
+
+const RESOURCE_TYPES = ["compute", "database", "object_storage", "block_storage", "network", "load_balancer", "function", "queue", "dns"];
+
+const SAMPLE_INVENTORY = {"source_environment": "on-prem-datacenter-1", "resources": [{"id": "net-core", "name": "core-network", "type": "network", "attributes": {"cidr": "10.0.0.0/16"}, "tags": {"tier": "infra"}, "depends_on": []}, {"id": "dns-primary", "name": "internal-dns", "type": "dns", "attributes": {"zone": "corp.internal"}, "tags": {"tier": "infra"}, "depends_on": ["net-core"]}, {"id": "db-orders", "name": "orders-postgres", "type": "database", "attributes": {"engine": "postgresql", "version": "13", "size_gb": 512, "ha": false}, "tags": {"tier": "data", "app": "orders"}, "depends_on": ["net-core"]}, {"id": "db-legacy-crm", "name": "crm-oracle", "type": "database", "attributes": {"engine": "oracle", "version": "11g", "size_gb": 2048, "ha": false, "eol": true}, "tags": {"tier": "data", "app": "crm"}, "depends_on": ["net-core"]}, {"id": "vm-web-01", "name": "orders-web-01", "type": "compute", "attributes": {"os": "ubuntu-20.04", "cpu": 4, "ram_gb": 16, "role": "web", "stateless": true}, "tags": {"tier": "app", "app": "orders"}, "depends_on": ["db-orders", "net-core"]}, {"id": "vm-web-02", "name": "orders-web-02", "type": "compute", "attributes": {"os": "ubuntu-20.04", "cpu": 4, "ram_gb": 16, "role": "web", "stateless": true}, "tags": {"tier": "app", "app": "orders"}, "depends_on": ["db-orders", "net-core"]}, {"id": "vm-crm-app", "name": "crm-app-server", "type": "compute", "attributes": {"os": "windows-server-2008r2", "cpu": 8, "ram_gb": 32, "role": "app", "stateless": false, "eol": true}, "tags": {"tier": "app", "app": "crm"}, "depends_on": ["db-legacy-crm", "net-core"]}, {"id": "lb-orders", "name": "orders-loadbalancer", "type": "load_balancer", "attributes": {"algorithm": "round_robin"}, "tags": {"tier": "app", "app": "orders"}, "depends_on": ["vm-web-01", "vm-web-02"]}, {"id": "fs-reports", "name": "reports-fileshare", "type": "object_storage", "attributes": {"size_gb": 900, "protocol": "nfs"}, "tags": {"tier": "data", "app": "reporting"}, "depends_on": ["net-core"]}, {"id": "job-nightly-etl", "name": "nightly-etl-job", "type": "function", "attributes": {"runtime": "python3.9", "schedule": "cron(0 2 * * *)"}, "tags": {"tier": "batch", "app": "reporting"}, "depends_on": ["db-orders", "fs-reports"]}]};
+
+// NOTE on dependsOn: internally we link resources by a stable, non-editable
+// _uid rather than by the user-editable `id` string. If we linked by id
+// directly, renaming a resource's id (very likely once someone replaces the
+// "resource-3" default with something meaningful) would silently orphan
+// every other resource's dependency reference to it. _uid never changes;
+// `id` is translated to the current value only at the boundary (analysis,
+// export, import) where the engine functions need plain id strings.
+function freshResource(idx) {
+  return { _uid: `u${idx}`, id: `resource-${idx}`, name: `New resource ${idx}`, type: "compute", attributes: { os: "ubuntu-22.04", cpu: 2, ram_gb: 4, stateless: false, eol: false }, tags: {}, dependsOn: [], collapsed: false };
+}
+
+const state = {
+  envName: "my-environment",
+  targetProfile: "aws",
+  resources: [],
+  nextIdx: 1,
+  screen: "manifest",
+  lastResults: null,
+};
+
+function fromRawInventory(raw) {
+  // Two passes: first assign every resource a stable _uid and record its
+  // current id, then translate each resource's depends_on (raw id strings)
+  // into _uid references using that map. Unresolvable ids (typos, refs to
+  // resources not in the file) are dropped with a console warning rather
+  // than silently mis-linking.
+  const idToUid = {};
+  const resources = raw.resources.map((r, i) => {
+    const uid = `u${i + 1}`;
+    idToUid[r.id] = uid;
+    return {
+      _uid: uid, id: r.id, name: r.name, type: r.type,
+      attributes: Object.assign({}, r.attributes),
+      tags: Object.assign({}, r.tags || {}),
+      dependsOn: [],
+      collapsed: true,
+    };
+  });
+  raw.resources.forEach((r, i) => {
+    const rawDeps = r.depends_on || r.dependsOn || [];
+    resources[i].dependsOn = rawDeps
+      .map((depId) => {
+        if (!(depId in idToUid)) { console.warn(`Unknown dependency '${depId}' on '${r.id}' — dropped.`); return null; }
+        return idToUid[depId];
+      })
+      .filter(Boolean);
+  });
+  return resources;
+}
+
+function loadSample() {
+  state.envName = SAMPLE_INVENTORY.source_environment;
+  state.resources = fromRawInventory(SAMPLE_INVENTORY);
+  if (state.resources.length) state.resources[0].collapsed = false;
+  state.nextIdx = state.resources.length + 1;
+  render();
+}
+
+// Translates every resource's dependsOn from internal _uid references to the
+// *current* id strings the engine (and exported files) expect. Always
+// resolved fresh against present state, so a rename is automatically
+// reflected correctly no matter when it happened.
+function resourcesWithIdDeps() {
+  const uidToId = {};
+  state.resources.forEach((r) => { uidToId[r._uid] = r.id; });
+  return state.resources.map((r) => ({
+    id: r.id, name: r.name, type: r.type, attributes: r.attributes, tags: r.tags,
+    dependsOn: r.dependsOn.map((uid) => uidToId[uid]).filter(Boolean),
+  }));
+}
+
+function toRawInventory() {
+  const translated = resourcesWithIdDeps();
+  return {
+    source_environment: state.envName,
+    resources: translated.map((r) => ({
+      id: r.id, name: r.name, type: r.type, attributes: r.attributes, tags: r.tags, depends_on: r.dependsOn,
+    })),
+  };
+}
+
+// ---------- attribute field schemas per type ----------
+
+const TYPE_FIELDS = {
+  compute: [
+    { key: "os", label: "OS", kind: "text", placeholder: "ubuntu-22.04" },
+    { key: "cpu", label: "vCPU", kind: "number" },
+    { key: "ram_gb", label: "RAM (GB)", kind: "number" },
+    { key: "stateless", label: "Stateless", kind: "bool" },
+    { key: "eol", label: "OS is end-of-life", kind: "bool" },
+  ],
+  database: [
+    { key: "engine", label: "Engine", kind: "select", options: ["postgresql", "mysql", "mariadb", "sqlserver", "oracle", "other"] },
+    { key: "size_gb", label: "Size (GB)", kind: "number" },
+    { key: "ha", label: "High availability configured", kind: "bool" },
+    { key: "eol", label: "Engine version is end-of-life", kind: "bool" },
+  ],
+  object_storage: [
+    { key: "size_gb", label: "Size (GB)", kind: "number" },
+    { key: "protocol", label: "Protocol", kind: "text", placeholder: "nfs / smb / s3" },
+  ],
+  block_storage: [
+    { key: "size_gb", label: "Size (GB)", kind: "number" },
+  ],
+  network: [
+    { key: "cidr", label: "CIDR block", kind: "text", placeholder: "10.0.0.0/16" },
+  ],
+  load_balancer: [
+    { key: "algorithm", label: "Algorithm", kind: "text", placeholder: "round_robin" },
+  ],
+  function: [
+    { key: "runtime", label: "Runtime", kind: "text", placeholder: "python3.11" },
+  ],
+  queue: [],
+  dns: [
+    { key: "zone", label: "Zone", kind: "text", placeholder: "corp.internal" },
+  ],
+};
+
+function defaultAttributesFor(type) {
+  const f = TYPE_FIELDS[type] || [];
+  const attrs = {};
+  for (const field of f) {
+    if (field.kind === "bool") attrs[field.key] = false;
+    else if (field.kind === "number") attrs[field.key] = 0;
+    else attrs[field.key] = "";
+  }
+  return attrs;
+}
+
+// ---------- rendering: manifest screen ----------
+
+function renderTickets() {
+  const row = document.getElementById("ticketRow");
+  row.innerHTML = "";
+  for (const [key, profile] of Object.entries(TARGET_PROFILES)) {
+    const div = document.createElement("div");
+    div.className = "ticket" + (state.targetProfile === key ? " selected" : "");
+    div.innerHTML = `<div class="t-name display">${profile.name}</div><div class="t-kind">${profile.kind.replace("_", "-")}</div>`;
+    div.addEventListener("click", () => { state.targetProfile = key; renderTickets(); });
+    row.appendChild(div);
+  }
+}
+
+function otherResources(currentUid) {
+  return state.resources.filter((r) => r._uid !== currentUid);
+}
+
+function renderResourceList() {
+  const list = document.getElementById("resourceList");
+  list.innerHTML = "";
+  state.resources.forEach((r, idx) => {
+    const card = document.createElement("div");
+    card.className = "resource-card" + (r.collapsed ? " collapsed" : "");
+
+    const head = document.createElement("div");
+    head.className = "rc-head";
+    head.innerHTML = `
+      <span class="rc-index mono">${String(idx + 1).padStart(2, "0")}</span>
+      <span class="rc-type-badge">${r.type}</span>
+      <span class="rc-name">${escapeHtml(r.name || r.id)}</span>
+      <span class="rc-id">${escapeHtml(r.id)}</span>
+      <span class="chevron">▼</span>
+    `;
+    head.addEventListener("click", (e) => { r.collapsed = !r.collapsed; renderResourceList(); });
+    card.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "rc-body";
+
+    const idField = makeTextField("Resource ID", r.id, (v) => { r.id = v.trim(); }, "unique-id");
+    const nameField = makeTextField("Name", r.name, (v) => { r.name = v; }, "Display name");
+    // Refresh on blur (not every keystroke) so other cards' dependency chip
+    // labels pick up a rename without yanking focus mid-type.
+    idField.querySelector("input").addEventListener("blur", () => renderResourceList());
+    nameField.querySelector("input").addEventListener("blur", () => renderResourceList());
+    body.appendChild(makeFieldRow([
+      idField,
+      nameField,
+      makeSelectField("Type", r.type, RESOURCE_TYPES, (v) => {
+        r.type = v;
+        r.attributes = defaultAttributesFor(v);
+        renderResourceList();
+      }),
+    ]));
+
+    const attrFields = TYPE_FIELDS[r.type] || [];
+    const attrRows = [];
+    let rowBuf = [];
+    for (const f of attrFields) {
+      if (f.kind === "bool") {
+        rowBuf.push(makeBoolField(f.label, !!r.attributes[f.key], (v) => { r.attributes[f.key] = v; }));
+      } else if (f.kind === "select") {
+        rowBuf.push(makeSelectField(f.label, r.attributes[f.key] || f.options[0], f.options, (v) => { r.attributes[f.key] = v; }));
+      } else if (f.kind === "number") {
+        rowBuf.push(makeNumberField(f.label, r.attributes[f.key] || 0, (v) => { r.attributes[f.key] = v; }));
+      } else {
+        rowBuf.push(makeTextField(f.label, r.attributes[f.key] || "", (v) => { r.attributes[f.key] = v; }, f.placeholder || ""));
+      }
+      if (rowBuf.length === 3) { attrRows.push(makeFieldRow(rowBuf)); rowBuf = []; }
+    }
+    if (rowBuf.length) attrRows.push(makeFieldRow(rowBuf));
+    attrRows.forEach((row) => body.appendChild(row));
+
+    // dependency chips
+    const depField = document.createElement("div");
+    depField.className = "field";
+    const depLabel = document.createElement("label");
+    depLabel.textContent = "Depends on";
+    depField.appendChild(depLabel);
+    const chipWrap = document.createElement("div");
+    chipWrap.className = "chips";
+    const others = otherResources(r._uid);
+    if (!others.length) {
+      const span = document.createElement("span");
+      span.className = "mono";
+      span.style.color = "var(--muted)";
+      span.style.fontSize = "12px";
+      span.textContent = "Add more resources to link dependencies.";
+      chipWrap.appendChild(span);
+    }
+    others.forEach((other) => {
+      const chip = document.createElement("span");
+      const on = r.dependsOn.includes(other._uid);
+      chip.className = "chip" + (on ? " on" : "");
+      chip.textContent = other.id || "(unnamed)";
+      chip.addEventListener("click", () => {
+        if (on) r.dependsOn = r.dependsOn.filter((x) => x !== other._uid);
+        else r.dependsOn.push(other._uid);
+        renderResourceList();
+      });
+      chipWrap.appendChild(chip);
+    });
+    depField.appendChild(chipWrap);
+    body.appendChild(depField);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn small danger";
+    removeBtn.textContent = "Remove resource";
+    removeBtn.style.marginTop = "6px";
+    removeBtn.addEventListener("click", () => {
+      state.resources = state.resources.filter((x) => x !== r);
+      // strip dangling dependency references (by _uid, so this is exact
+      // regardless of what the removed resource's id was renamed to)
+      state.resources.forEach((other) => { other.dependsOn = other.dependsOn.filter((uid) => uid !== r._uid); });
+      renderResourceList();
+    });
+    body.appendChild(removeBtn);
+
+    card.appendChild(body);
+    list.appendChild(card);
+  });
+
+  if (!state.resources.length) {
+    const empty = document.createElement("div");
+    empty.className = "banner hint";
+    empty.textContent = "No resources yet — add one, or load the sample environment below to see the platform in action.";
+    list.appendChild(empty);
+  }
+}
+
+function makeFieldRow(fields) {
+  const row = document.createElement("div");
+  row.className = "field-row";
+  fields.forEach((f) => row.appendChild(f));
+  return row;
+}
+function makeTextField(label, value, onChange, placeholder) {
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const lbl = document.createElement("label"); lbl.textContent = label; wrap.appendChild(lbl);
+  const input = document.createElement("input");
+  input.type = "text"; input.value = value; input.placeholder = placeholder || "";
+  input.addEventListener("input", () => onChange(input.value));
+  wrap.appendChild(input);
+  return wrap;
+}
+function makeNumberField(label, value, onChange) {
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const lbl = document.createElement("label"); lbl.textContent = label; wrap.appendChild(lbl);
+  const input = document.createElement("input");
+  input.type = "number"; input.value = value;
+  input.addEventListener("input", () => onChange(Number(input.value) || 0));
+  wrap.appendChild(input);
+  return wrap;
+}
+function makeSelectField(label, value, options, onChange) {
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const lbl = document.createElement("label"); lbl.textContent = label; wrap.appendChild(lbl);
+  const select = document.createElement("select");
+  options.forEach((o) => {
+    const opt = document.createElement("option");
+    opt.value = o; opt.textContent = o; if (o === value) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener("change", () => onChange(select.value));
+  wrap.appendChild(select);
+  return wrap;
+}
+function makeBoolField(label, value, onChange) {
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const line = document.createElement("label");
+  line.className = "checkline";
+  line.style.marginTop = "26px";
+  const input = document.createElement("input");
+  input.type = "checkbox"; input.checked = value;
+  input.addEventListener("change", () => onChange(input.checked));
+  const span = document.createElement("span"); span.textContent = label;
+  line.appendChild(input); line.appendChild(span);
+  wrap.appendChild(line);
+  return wrap;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function showBanner(message) {
+  const area = document.getElementById("banner-area");
+  if (!message) { area.innerHTML = ""; return; }
+  area.innerHTML = `<div class="banner error">${escapeHtml(message)}</div>`;
+}
+
+// ---------- validation + analysis ----------
+
+function validate() {
+  if (!state.resources.length) return "Add at least one resource before running analysis.";
+  const ids = state.resources.map((r) => r.id.trim());
+  if (ids.some((id) => !id)) return "Every resource needs a non-empty ID.";
+  const seen = new Set();
+  for (const id of ids) { if (seen.has(id)) return `Duplicate resource ID: '${id}'. IDs must be unique.`; seen.add(id); }
+  return null;
+}
+
+function runAnalysis() {
+  const err = validate();
+  if (err) { showBanner(err); return; }
+  showBanner(null);
+
+  const translated = resourcesWithIdDeps();
+  let comparison, plan, graphError = null;
+  try {
+    comparison = analyzeCompatibility(translated, state.targetProfile);
+  } catch (e) {
+    graphError = describeGraphError(e);
+  }
+  try {
+    plan = buildPlan(translated);
+  } catch (e) {
+    graphError = graphError || describeGraphError(e);
+  }
+
+  if (graphError) { showBanner(graphError); return; }
+
+  state.lastResults = { comparison, plan };
+  state.screen = "results";
+  render();
+  renderResults();
+}
+
+function describeGraphError(e) {
+  if (e.message === "unknown_dependency") {
+    const d = e.detail[0];
+    return `Resource '${d.resource}' depends on unknown resource '${d.unknownDep}'.`;
+  }
+  if (e.message === "cycle") {
+    return `Dependency cycle detected: ${e.detail.join(" → ")}. Remove the circular dependency before analyzing.`;
+  }
+  return "Could not build the dependency graph — check your resource dependencies.";
+}
+
+// ---------- rendering: results screen ----------
+
+function scoreColor(v) {
+  if (v >= 75) return "var(--go)";
+  if (v >= 50) return "var(--signal)";
+  return "var(--hold)";
+}
+
+function gaugeSVG(value) {
+  const size = 160, stroke = 14, r = (size - stroke) / 2, cx = size / 2, cy = size / 2;
+  const startAngle = -220, endAngle = 40; // degrees, sweep of ~260deg
+  const sweep = endAngle - startAngle;
+  const toXY = (deg) => {
+    const rad = (deg * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  };
+  const arcPath = (a0, a1) => {
+    const [x0, y0] = toXY(a0); const [x1, y1] = toXY(a1);
+    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+    return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;
+  };
+  const valueAngle = startAngle + (sweep * value) / 100;
+  const color = scoreColor(value);
+  return `
+  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <path d="${arcPath(startAngle, endAngle)}" fill="none" stroke="var(--line)" stroke-width="${stroke}" stroke-linecap="round"/>
+    <path d="${arcPath(startAngle, valueAngle)}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="34" fill="var(--paper)">${value}%</text>
+    <text x="${cx}" y="${cy + 20}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.5" fill="var(--muted)">SUCCESS</text>
+  </svg>`;
+}
+
+function renderResults() {
+  const { comparison, plan } = state.lastResults;
+  const el = document.getElementById("resultsContent");
+
+  const compatColor = scoreColor(comparison.overallCompat);
+  const perfColor = scoreColor(comparison.overallPerf);
+
+  let html = "";
+  html += `<p class="eyebrow mono">Target — ${comparison.targetName} (${comparison.targetKind.replace("_", "-")})</p>`;
+  html += `<div class="hero-row">`;
+  html += `<div class="panel gauge-panel">${gaugeSVG(comparison.successProbability)}<div class="g-value">Estimated success probability</div></div>`;
+  html += `<div class="panel readout-panel">
+      <div class="r-label">Compatibility</div>
+      <div class="r-value" style="color:${compatColor}">${comparison.overallCompat}%</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${comparison.overallCompat}%;background:${compatColor}"></div></div>
+    </div>`;
+  html += `<div class="panel readout-panel">
+      <div class="r-label">Performance fit</div>
+      <div class="r-value" style="color:${perfColor}">${comparison.overallPerf}%</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${comparison.overallPerf}%;background:${perfColor}"></div></div>
+    </div>`;
+  html += `</div>`;
+
+  html += `<div class="stat-strip">
+      <div class="stat-mini"><div class="n">${state.resources.length}</div><div class="l">Resources analyzed</div></div>
+      <div class="stat-mini"><div class="n">${plan.waves.length}</div><div class="l">Migration waves</div></div>
+      <div class="stat-mini"><div class="n" style="color:${comparison.blockers.length ? 'var(--hold)' : 'var(--go)'}">${comparison.blockers.length}</div><div class="l">Hard blockers</div></div>
+      <div class="stat-mini"><div class="n">${comparison.issues.length}</div><div class="l">Risks flagged</div></div>
+    </div>`;
+
+  if (comparison.blockers.length) {
+    html += `<div class="panel" style="margin-bottom:16px;"><div class="section-head"><h2>Blockers to resolve before migration</h2></div>`;
+    comparison.blockers.forEach((b) => { html += `<div class="blocker-item">[${escapeHtml(b.resourceId)}] ${escapeHtml(b.text)}</div>`; });
+    html += `</div>`;
+  }
+  if (comparison.issues.length) {
+    html += `<div class="panel" style="margin-bottom:16px;"><div class="section-head"><h2>Risks worth reviewing</h2></div>`;
+    comparison.issues.slice(0, 8).forEach((i) => { html += `<div class="risk-item">[${escapeHtml(i.resourceId)}] ${escapeHtml(i.text)}</div>`; });
+    if (comparison.issues.length > 8) html += `<div class="risk-item" style="opacity:.6">+ ${comparison.issues.length - 8} more (see manifest table below)</div>`;
+    html += `</div>`;
+  }
+
+  // route line
+  html += `<div class="panel" style="margin-bottom:16px;"><div class="section-head"><h2>Migration route</h2></div><div class="route-wrap"><div class="route-line">`;
+  plan.waves.forEach((wave, i) => {
+    html += `<div class="route-node">
+        <div class="node-dot-row">
+          <div class="segment left"></div><div class="dot"></div><div class="segment right"></div>
+        </div>
+        <div class="w-label">Wave ${i + 1}</div>
+        <div class="w-chips">`;
+    wave.forEach((rid) => {
+      const rp = plan.resourcePlans[rid];
+      html += `<div class="w-chip risk-${rp.risk}" title="${escapeHtml(rid)}">${escapeHtml(rid)}</div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div></div></div>`;
+
+  // manifest table
+  html += `<div class="panel"><div class="section-head"><h2>Full manifest</h2><button class="btn small" id="exportReportBtn">Export report JSON</button></div>`;
+  html += `<div class="table-wrap"><table class="manifest"><tr><th>ID</th><th>Type</th><th>Wave</th><th>Strategy</th><th>Risk</th><th>Compat</th><th>Perf</th><th>Combined</th><th>Notes</th></tr>`;
+  const sortedResults = [...comparison.results].sort((a, b) => a.combined - b.combined);
+  sortedResults.forEach((res) => {
+    const rp = plan.resourcePlans[res.resourceId];
+    const notes = [...res.blockers, ...res.issues].join(" · ") || "—";
+    html += `<tr>
+        <td class="mono">${escapeHtml(res.resourceId)}</td>
+        <td class="mono">${escapeHtml(rp.targetService.replace("aws_", ""))}</td>
+        <td class="mono">${rp.wave}</td>
+        <td class="mono">${rp.strategy}</td>
+        <td><span class="badge risk-${rp.risk}">${rp.risk}</span></td>
+        <td class="mono">${res.compat}%</td>
+        <td class="mono">${res.perf}%</td>
+        <td><span class="badge ${res.combined >= 75 ? 'risk-low' : res.combined >= 50 ? 'risk-medium' : 'risk-high'}">${res.combined}%</span></td>
+        <td class="notes-cell">${escapeHtml(notes)}</td>
+      </tr>`;
+  });
+  html += `</table></div></div>`;
+
+  el.innerHTML = html;
+
+  document.getElementById("exportReportBtn").addEventListener("click", exportReportJSON);
+}
+
+function exportReportJSON() {
+  const { comparison, plan } = state.lastResults;
+  const payload = {
+    generated_at: new Date().toISOString(),
+    source_environment: state.envName,
+    target_profile: state.targetProfile,
+    success_probability: comparison.successProbability,
+    overall_compatibility: comparison.overallCompat,
+    overall_performance: comparison.overallPerf,
+    blockers: comparison.blockers,
+    issues: comparison.issues,
+    waves: plan.waves,
+    resources: state.resources.map((r) => ({
+      id: r.id, type: r.type,
+      strategy: plan.resourcePlans[r.id].strategy,
+      risk: plan.resourcePlans[r.id].risk,
+      target_service: plan.resourcePlans[r.id].targetService,
+      compatibility_score: comparison.results.find((x) => x.resourceId === r.id).compat,
+      performance_score: comparison.results.find((x) => x.resourceId === r.id).perf,
+    })),
+  };
+  downloadFile(`migration-report-${state.envName}.json`, JSON.stringify(payload, null, 2));
+}
+
+function downloadFile(filename, contents) {
+  const blob = new Blob([contents], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------- screen switching ----------
+
+function setScreen(name) {
+  state.screen = name;
+  document.getElementById("screen-manifest").classList.toggle("active", name === "manifest");
+  document.getElementById("screen-results").classList.toggle("active", name === "results");
+  document.querySelectorAll(".progress .step").forEach((el) => {
+    el.classList.toggle("active", el.dataset.step === name);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function render() {
+  document.getElementById("envName").value = state.envName;
+  renderTickets();
+  renderResourceList();
+  setScreen(state.screen);
+}
+
+// ---------- wire up static controls ----------
+
+document.getElementById("envName").addEventListener("input", (e) => { state.envName = e.target.value; });
+document.getElementById("addResourceBtn").addEventListener("click", () => {
+  const r = freshResource(state.nextIdx++);
+  state.resources.forEach((x) => (x.collapsed = true));
+  state.resources.push(r);
+  renderResourceList();
+});
+document.getElementById("loadSampleBtn").addEventListener("click", loadSample);
+document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+document.getElementById("backBtn").addEventListener("click", () => setScreen("manifest"));
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importArea").style.display = "block";
+  document.getElementById("importActions").style.display = "block";
+  document.getElementById("importArea").value = "";
+});
+document.getElementById("cancelImportBtn").addEventListener("click", () => {
+  document.getElementById("importArea").style.display = "none";
+  document.getElementById("importActions").style.display = "none";
+});
+document.getElementById("applyImportBtn").addEventListener("click", () => {
+  try {
+    const raw = JSON.parse(document.getElementById("importArea").value);
+    state.envName = raw.source_environment || state.envName;
+    state.resources = fromRawInventory(raw);
+    state.nextIdx = state.resources.length + 1;
+    document.getElementById("importArea").style.display = "none";
+    document.getElementById("importActions").style.display = "none";
+    showBanner(null);
+    render();
+  } catch (e) {
+    showBanner("Could not parse that JSON: " + e.message);
+  }
+});
+document.getElementById("exportBtn").addEventListener("click", () => {
+  downloadFile(`${state.envName || "inventory"}.json`, JSON.stringify(toRawInventory(), null, 2));
+});
+
+// ---------- boot ----------
+render();
+</script>
+</body>
+</html>

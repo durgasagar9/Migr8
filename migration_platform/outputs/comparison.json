@@ -1,0 +1,112 @@
+{
+  "target_name": "Azure",
+  "target_kind": "cloud",
+  "overall_compatibility": 92,
+  "overall_performance": 98,
+  "success_probability": 80,
+  "top_blockers": [
+    "Engine 'oracle' is not supported on Azure in this profile -- requires a database re-platform to a supported engine before/ during migration.",
+    "OS 'windows-server-2008r2' has no direct supported image/pattern on Azure in this profile -- requires an OS upgrade or a rebuild onto a supported image."
+  ],
+  "top_risks": [
+    "Source has no HA configured; recommend enabling Multi-AZ/zone-redundancy on the target for equivalent reliability post-migration.",
+    "Source engine version is end-of-life; managed-service compatibility for this exact version is not guaranteed and an in-place upgrade may be required first.",
+    "Source has no HA configured; recommend enabling Multi-AZ/zone-redundancy on the target for equivalent reliability post-migration."
+  ],
+  "notes": [
+    "No first-party managed Oracle service -- Oracle workloads must run self-managed on a VM, which lowers compatibility for that engine.",
+    "Scored 10 resource(s) against the 'Azure' profile, weighted by dependency blast radius (resources more depended-upon count more).",
+    "2 hard blocker(s) found -- each caps its resource's score at 40 and reduces the overall success probability by 6 points (max 30)."
+  ],
+  "results": [
+    {
+      "resource_id": "net-core",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "dns-primary",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "db-orders",
+      "compatibility_score": 100,
+      "performance_score": 92,
+      "combined_score": 97,
+      "blockers": [],
+      "issues": [
+        "Source has no HA configured; recommend enabling Multi-AZ/zone-redundancy on the target for equivalent reliability post-migration."
+      ]
+    },
+    {
+      "resource_id": "db-legacy-crm",
+      "compatibility_score": 30,
+      "performance_score": 92,
+      "combined_score": 40,
+      "blockers": [
+        "Engine 'oracle' is not supported on Azure in this profile -- requires a database re-platform to a supported engine before/ during migration."
+      ],
+      "issues": [
+        "Source engine version is end-of-life; managed-service compatibility for this exact version is not guaranteed and an in-place upgrade may be required first.",
+        "Source has no HA configured; recommend enabling Multi-AZ/zone-redundancy on the target for equivalent reliability post-migration."
+      ]
+    },
+    {
+      "resource_id": "vm-web-01",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "vm-web-02",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "vm-crm-app",
+      "compatibility_score": 45,
+      "performance_score": 100,
+      "combined_score": 40,
+      "blockers": [
+        "OS 'windows-server-2008r2' has no direct supported image/pattern on Azure in this profile -- requires an OS upgrade or a rebuild onto a supported image."
+      ],
+      "issues": []
+    },
+    {
+      "resource_id": "lb-orders",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "fs-reports",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    },
+    {
+      "resource_id": "job-nightly-etl",
+      "compatibility_score": 100,
+      "performance_score": 100,
+      "combined_score": 100,
+      "blockers": [],
+      "issues": []
+    }
+  ]
+}

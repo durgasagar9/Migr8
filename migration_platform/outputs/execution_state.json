@@ -1,0 +1,52 @@
+{
+  "net-core": {
+    "wave": 1,
+    "status": "succeeded",
+    "detail": "Applied 'rehost' -> aws_vpc (simulated)."
+  },
+  "db-legacy-crm": {
+    "wave": 2,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_db_instance (simulated)."
+  },
+  "db-orders": {
+    "wave": 2,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_db_instance (simulated)."
+  },
+  "dns-primary": {
+    "wave": 2,
+    "status": "succeeded",
+    "detail": "Applied 'rehost' -> aws_route53_zone (simulated)."
+  },
+  "fs-reports": {
+    "wave": 2,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_s3_bucket (simulated)."
+  },
+  "job-nightly-etl": {
+    "wave": 3,
+    "status": "succeeded",
+    "detail": "Applied 'rehost' -> aws_lambda_function (simulated)."
+  },
+  "vm-crm-app": {
+    "wave": 3,
+    "status": "succeeded",
+    "detail": "Applied 'refactor' -> aws_instance (simulated)."
+  },
+  "vm-web-01": {
+    "wave": 3,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_instance (simulated)."
+  },
+  "vm-web-02": {
+    "wave": 3,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_instance (simulated)."
+  },
+  "lb-orders": {
+    "wave": 4,
+    "status": "succeeded",
+    "detail": "Applied 'replatform' -> aws_lb (simulated)."
+  }
+}
